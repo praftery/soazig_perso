@@ -20,51 +20,33 @@ import datetime
 c = SmapClient(base='http://new.openbms.org/backend',\
                key=['XuETaff882hB6li0dP3XWdiGYJ9SSsFGj0N8'])
 t = time.time()
-source = 'Sutardja Dai Hall BACnet'
-path_list = [
-             'HEAT.COOL',
-             'VLV_POS',
-             'CTL_STPT',
-             'ROOM_TEMP',
-             'AI_3',
-             'CTL_FLOW_MIN',
-             'DMPR_POS',
-             'AIR_VOLUME'
-             ] 
-source_tav = 'Sutardja Dai Hall TAV'
-path_and = 'tav_whole_bldg'
-path_list_tav = [
-                'tav_active',
-                '/cycle'
+source_energy = 'Sutardja Dai Hall Energy Data'
+path_and = 'energy_data/variable_elec_cost/'
+path_list_energy = [
+                'total_cost'
                 ]
-zone_name = 'S5-09'
+
 restrict = " Metadata/SourceName = '%s' and Path ~ '%s' and ("\
-             %(source, zone_name)\
-             + ' or '.join(["Path ~ '%s'"] * len(path_list)) \
-             %tuple(path_list) + ")"
+             %(source_energy, path_and) \
+             + ' or '.join(["Path ~ '%s'"] * len(path_list_energy)) \
+             %tuple(path_list_energy) + ")"
 
-restrict2 = " Metadata/SourceName = '%s' and Path ~ '%s' and Path ~ '%s' and ("\
-             %(source_tav, zone_name, path_and) \
-             + ' or '.join(["Path ~ '%s'"] * len(path_list_tav)) \
-             %tuple(path_list_tav) + ")"
-
-restrictall = "(" + restrict + ") or (" + restrict2 + ")"
-tags = c.tags(restrictall)
+tags = c.tags(restrict)
 
 print "Tags len: ", len(tags)
-startDate = "09/07/2015"
-endDate = "09/09/2015"
+startDate = "12/13/2015 11:00"
+endDate = "12/13/2015 13:00"
 #start = dtutil.dt2ts(dtutil.strptime_tz("08-28-2015", "%m-%d-%Y"))
 #end   = dtutil.dt2ts(dtutil.strptime_tz("08-29-2015", "%m-%d-%Y"))
 #data = c.data(restrictall, start, end)
 #pp.pprint(data)
 #pdb.set_trace()
 
-name = zone_name + '_tav_cycle.csv' 
+name = 'energy_data1213_test.csv' 
 dt_format = '%Y-%m-%d %H:%M:%S'
-query_data = 'select data in ("' + startDate + '" , "' + endDate + '") where' + restrictall
+query_data = 'select data in ("' + startDate + '" , "' + endDate + '") where' + restrict
 data = c.query(query_data)
-#data = c.data(restrictall, start, end, limiit=1000)
+#data = c.data(restrictall, start, end, limit=1000)
 
 N=len(data)
 df = pd.DataFrame()
@@ -79,7 +61,7 @@ for i in range(N):
   if d.any():
     tag_path = [tag['Path'] for tag in tags if tag['uuid'] == u][0]
     print tag_path
-    for p in path_list_tav + path_list:
+    for p in path_list_energy:
       if p in tag_path:
         df[p] = d[:,1]
       print " Dwnl data for " + p

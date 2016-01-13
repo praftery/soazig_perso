@@ -26,13 +26,10 @@ def restrict(source, zones_names, points):
          %tuple(points) + ")"
   return var
 
-def query_data(c, restrict, startDate, endDate):
-#  if mode == 'hour':
-  query_data = 'apply window(first, field="hour") to data in ("' + \
+def query_data(c, restrict, startDate, endDate, win='select'):
+  query_data = win + ' data in ("' + \
                  str(startDate) + '" , "' + str(endDate) + \
-                 '") limit 10000000 where ' + restrict
-#  else:
-#  query_data = 'select data in ("' + str(startDate) + '" , "' + str(endDate) + '") where ' + restrict
+                 '") where ' + restrict
   data = c.query(query_data)
   tags = c.tags(restrict)
 #  start = dtutil.dt2ts(dtutil.strptime_tz(str(startDate), "%m/%d/%Y"))
@@ -49,80 +46,48 @@ def data_frame(data, tags, points):
   df['datetime'] = [datetime.datetime.fromtimestamp(x/1000).strftime(dt_format)
                     for x in d[:,0]]
   for i in range(N):
+    u = data[i]['uuid']
     d = np.array(data[i]['Readings'])
     if d.any():
+      tag_path = [tag['Path'] for tag in tags if tag['uuid'] == u][0]
       try:
         for p in points:
-          if p in data[i]['Path']:
-            try:
-              z_name = str(data[i]['Path'].split('/')[-2] + '_') + p
-              df[z_name] = d[:,1]
-              print "Dwld data for: ", z_name          
-            except:
-              pdb.set_trace()
+          if p in tag_path: 
+            head = '_'.join(tag_path.split('/')[-2:])
+            #head = p
+            df[head] = d[:,1]
+            print " Dwnl data for " + head
       except:
-        pdb.set_trace()
+        print "Could not dwn data for " + '_'.join(tag_path.split('/')[-2:])
+#        pdb.set_trace()
   return df
 
-#def pd_stats(data_frame):
-  
+def data_ratios(df, points):
+  df2 = pd.DataFrame()
+  df2['timestamp'] = df['timestamp']
+  df2['datetime'] = df['datetime']
+  for column_name, column in df.transpose()[2:].iterrows():
+    zone = column_name[:5]
+    ratio = zone + '_ratio'
+    at_min = zone + '_at_min'
+    if not ratio in df2.transpose().iterrows():
+      try:
+        df2[ratio] = df[zone + '_CTL_FLOW_MIN']/df[zone + '_CTL_FLOW_MAX']
+      except:
+        print "Could not perform calcs for: ", ratio
+    if not at_min in df2.transpose().iterrows():
+      try:
+        df2[at_min] = df[zone + '_AIR_VOLUME']/df[zone + '_CTL_FLOW_MIN']
+      except:
+        print "Could not perform calcs for: ", at_min
+  return df2
 
+if __name__ == "__main__":
+  points = ['AIR_VOLUME', 'CTL_FLOW_MIN', 'CTL_FLOW_MAX']
+  df_path = '../csv_output/SDH_TAV_20151124-20151126.csv'
+  df = pd.read_csv(df_path,  index_col=0, parse_dates=True) 
+  df_aug = data_ratios(df, points)
+  df_path_aug = '../csv_output/SDH_TAV_20151124-20151126_aug.csv'
+  df_aug.to_csv(df_path_aug)
+  pdb.set_trace()
 
-
-
-#def zones_dict_init(data, points):
-#  dico = {}
-#  dico['timestamp']= []
-#  dico['datetime'] = []
-#  for d in data:
-#    z_name = str(d['Path'].split('/')[-2])
-#    p = str(d['Path'].split('/')[-1])
-#    uuid = str(d['uuid'])
-#    if z_name not in dico:
-#      dico[z_name] = {}
-#    if p in points:
-#      if p not in dico[z_name]:
-#        dico[z_name][p]={}
-#    if uuid not in dico[z_name][p]:
-#      dico[z_name][p]['uuid'] = uuid
-#      dico[z_name][p]['Readings'] = []
-#  return dico
-#
-#def fill_zones_dict(data, dico, points):
-#  N = len(data)
-#  dt_format = '%Y-%m-%d %H:%M:%S'
-#  d = np.array(data[0]['Readings'])
-#  dico['timestamp'] = d[:,0]
-#  dico['datetime'] = [datetime.datetime.fromtimestamp(x/1000).strftime(dt_format)
-#                    for x in d[:,0]]
-#  for z in [z in dico.keys()
-#
-#  for d in data:
-#    d_r = np.array(d['Readings'])
-#    if d_r.any():
-#      try:
-#        for p in points:
-#          if p in d['Path']:
-#            try:
-#              z_name = str(d['Path'].split('/')[-2])
-#              dico[z_name] = d_r[:,1]
-#              print "Dwld data for: ", z_name          
-#            except:
-#              pdb.set_trace()
-#      except:
-#        pdb.set_trace()
-#  return df
-
-
-
-
-
-
-
-
-
-
-
-
-
-  

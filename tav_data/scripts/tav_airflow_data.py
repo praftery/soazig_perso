@@ -28,12 +28,15 @@ source = 'Sutardja Dai Hall BACnet'
 points = ['CTL_FLOW_MAX', 'CTL_FLOW_MIN', 'AIR_VOLUME'] 
 #zones_names = ['S4-18', 'S4-03', 'S4-05', 'S4-09']
 full_frames = []
-for f in [str(f) for f in [3,4,5,6,7,2,1]]:
+#for f in [str(f) for f in [3,4,5,6,7,2,1]]:
+not_zones = ['S1-21', 'S6-21', 'S7-17', 'S7-18','S7-19', 'S7-20']
+for f in [str(f) for f in [6,7,2,1]]:
   floor_frames = []
   print "\nStarted process for Floor: ", f
   zones_names = ['S%s-%s' %(f, str(z).zfill(2)) for z in range(1,22)]
+  zones_names = [z for z in zones_names if z not in not_zones]
+  #pdb.set_trace()
   for zone_name in zones_names:
-  #if True:
     print "\nStarted process for zone: ", zone_name
     zone_frames = []
     startF = date(2015,11,9)

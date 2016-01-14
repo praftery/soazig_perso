@@ -37,7 +37,7 @@ def query_data(c, restrict, startDate, endDate, win='select'):
 #  data = c.data(restrict, start, end)
   return tags, data
 
-def data_frame(data, tags, points):
+def data_frame(data, tags, points, mode):
   N = len(data)
   dt_format = '%Y-%m-%d %H:%M:%S'
   df = pd.DataFrame()
@@ -46,10 +46,10 @@ def data_frame(data, tags, points):
   df['datetime'] = [datetime.datetime.fromtimestamp(x/1000).strftime(dt_format)
                     for x in d[:,0]]
   for i in range(N):
-    u = data[i]['uuid']
+    u = data[i][mode]
     d = np.array(data[i]['Readings'])
     if d.any():
-      tag_path = [tag['Path'] for tag in tags if tag['uuid'] == u][0]
+      tag_path = [tag['Path'] for tag in tags if tag[mode] == u][0]
       try:
         for p in points:
           if p in tag_path: 

@@ -1,4 +1,4 @@
 .cache/
-fig/
-csv_output/
-txt_output/
+fig*/
+csv_output*/
+txt_output*/

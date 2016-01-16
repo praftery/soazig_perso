@@ -96,11 +96,11 @@ def df_replace(csv_path, rep_in, rep_out):
 
 if __name__ == "__main__":
   points = ['AIR_VOLUME', 'CTL_FLOW_MIN', 'CTL_FLOW_MAX']
-  df3_path = '../csv_output/TEST/Floor04_airflow20151110-20151111.csv'
+  df3_path = '../csv_output/Floor2015/Floor05_airflow20151109-20151210.csv'
   df3 = pd.read_csv(df3_path,  index_col=0, parse_dates=True) 
   df3_aug = data_ratios(df3, points)
   pdb.set_trace()
-  df3_aug.to_csv(df3_path[:-4] + '_rep.csv')
+  df3_aug.to_csv('../csv_output/Floor2015/Floor05_ratios20151109-20151210.csv')
   pdb.set_trace()
 
   #df2_path = '../csv_output/TEST/Floor04_ratios20151110-20151111.csv'

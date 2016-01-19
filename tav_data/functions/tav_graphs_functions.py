@@ -2,9 +2,6 @@
 @author Soazig Kaam <soazig.kaam@berkeley.edu>
 """
 from smap.archiver.client import SmapClient
-from smap.util import periodicSequentialCall
-from smap.contrib import dtutil
-from smap.util import find
 from datetime import timedelta, date
 
 import numpy as np
@@ -17,8 +14,10 @@ import pprint as pp
 import datetime
 
 
-def restrict(source, zones_names, points):
-  var = "Metadata/SourceName = '%s' and\n(" %source\
+def restrict(source, zones_names, points, path_and=None):
+  if path_and != None:
+    zones_names=[str(path_and) + '/' + str(z) for z in zones_names]
+  var= "Metadata/SourceName = '%s' and\n(" %(source)\
          + ' or\n '.join(["Path ~ '%s'"]*len(zones_names))\
          %tuple(zones_names) \
          + ")\n and (" \
@@ -42,9 +41,10 @@ def data_frame(data, tags, points, mode):
   dt_format = '%Y-%m-%d %H:%M:%S'
   df = pd.DataFrame()
   d = np.array(data[0]['Readings'])
-  df['timestamp'] = d[:,0]
-  df['datetime'] = [datetime.datetime.fromtimestamp(x/1000).strftime(dt_format)
-                    for x in d[:,0]]
+  if d.any():
+    df['timestamp'] = d[:,0]
+    df['datetime'] = [datetime.datetime.fromtimestamp(x/1000).strftime(dt_format)
+                      for x in d[:,0]]
   for i in range(N):
     u = data[i][mode]
     d = np.array(data[i]['Readings'])

@@ -18,7 +18,7 @@ import tav_graphs_functions
 
 def energy_data(c, source, path_and, path_list_energy, path_not, startF, endF, delta, window):
   start = startF
-  end = start + delta
+  end = start + min(delta, (endF - start))
   time_frames = []
   while start != end:
     startDate = start.strftime("%m/%d/%Y %H:%M")
@@ -43,7 +43,7 @@ def energy_data(c, source, path_and, path_list_energy, path_not, startF, endF, d
     df = tav_graphs_functions.data_frame(data, tags, path_list_energy, mode='Path')
     time_frames.append(df)
     start = end
-    end += delta
+    end += min(delta, (endF - end))
  
 #    N=len(data)
 #    df = pd.DataFrame()
@@ -65,11 +65,10 @@ def energy_data(c, source, path_and, path_list_energy, path_not, startF, endF, d
 #                print " Dwnl data for " + p
 #          except:
 #            print "Could not dwn data for : ", p
-
   df_period = reduce(lambda x,y:\
               pd.merge(x, y, on=['timestamp','datetime']), time_frames)
   df_period.to_csv('../csv_output/Energy%s/'%(startF.year) + 'Energy_tav%s-%s_' \
-    %(startDate.strftime("%Y%m%d"), endDate.strftime("%Y%m%d")) \
+    %(startF.strftime("%Y%m%d"), endF.strftime("%Y%m%d")) \
     + '.csv')
 
 c = SmapClient(base='http://new.openbms.org/backend',\
@@ -97,9 +96,9 @@ path_list_energy = [
 #                'hot_water_S4-18'
 #                ]
 path_not = ['chilled_water_AH2A', 'chilled_water_AH2B']
-startF = date(2015, 10, 15)
-endF = date(2015, 12, 26)
-delta = datetime.timedelta(days=3)
+startF = date(2014, 10, 15)
+endF = date(2014, 12, 26)
+delta = datetime.timedelta(days=80)
 window = 'apply window(mean, field=\"minute\", width=15) to'
 energy_data(c, source_energy, path_and, path_list_energy, path_not, startF, endF, delta, window)
 

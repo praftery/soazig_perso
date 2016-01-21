@@ -40,6 +40,7 @@ def tav_data(c, source, points, floors, not_zones, floor_frames, startF, endF, d
         #pdb.set_trace()
         tags = query_data[0]
         data = query_data[1]
+        #pdb.set_trace()
         df = tav_graphs_functions.data_frame(data, tags, points, mode='Path')
         zone_frames.append(df)
         start = end
@@ -71,7 +72,7 @@ source1 = 'tav_whole_bldg'
 #points = ['CTL_FLOW_MAX', 'CTL_FLOW_MIN', 'AIR_VOLUME'] 
 points = ['average_airflow_in_cycle', 'average_airflow_in_hour', 'tav_active'] 
 floors = [str(f) for f in [4,5,6,7,3,2,1]]
-#floors = [str(f) for f in [5]]
+#floors = [str(f) for f in [4, 5]]
 not_zones = ['S1-11', 'S1-12', 'S1-21', 'S6-21', 'S7-17', 'S7-18','S7-19', 'S7-20', 'S7-21']
 floor_frames = []
 startF = date(2015,11,9)

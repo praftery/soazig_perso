@@ -38,6 +38,7 @@ def query_data(c, restrict, startDate, endDate, win='select'):
 
 def data_frame(data, tags, points, mode):
   N = len(data)
+  #pdb.set_trace()
   dt_format = '%Y-%m-%d %H:%M:%S'
   df = pd.DataFrame()
   d = np.array(data[0]['Readings'])
@@ -45,22 +46,24 @@ def data_frame(data, tags, points, mode):
     df['timestamp'] = d[:,0]
     df['datetime'] = [datetime.datetime.fromtimestamp(x/1000).strftime(dt_format)
                       for x in d[:,0]]
-  for i in range(N):
-    u = data[i][mode]
-    d = np.array(data[i]['Readings'])
-    if d.any():
-      tag_path = [tag['Path'] for tag in tags if tag[mode] == u][0]
-      try:
-        for p in points:
-          if p in tag_path: 
-            head = '_'.join(tag_path.split('/')[-2:])
-            #head = p
-            df[head] = d[:,1]
-            print " Dwnl data for " + head
-      except:
-        print "Could not dwn data for " + '_'.join(tag_path.split('/')[-2:])
-#        pdb.set_trace()
-  return df
+    for i in range(N):
+      u =data[i][mode]
+      d = np.array(data[i]['Readings'])
+      #if d.any():
+      if True:
+        tag_path = [tag['Path'] for tag in tags if tag[mode] == u][0]
+        try:
+          for p in points:
+            #if p in tag_path: 
+            if p == tag_path.split('/')[-1]: 
+              #head = '_'.join(tag_path.split('/')[-2:])
+              head = p
+              df[head] = d[:,1]
+              print " Dwnl data for " + head
+        except:
+          print "Could not dwn data for " + '_'.join(tag_path.split('/')[-2:])
+  #        pdb.set_trace()
+    return df
 
 def data_ratios(df, points):
   df3 = df.replace(0.0,0.1)
@@ -96,11 +99,12 @@ def df_replace(csv_path, rep_in, rep_out):
 
 if __name__ == "__main__":
   points = ['AIR_VOLUME', 'CTL_FLOW_MIN', 'CTL_FLOW_MAX']
-  df3_path = '../csv_output/Floor2015/Floor05_airflow20151109-20151210.csv'
-  df3 = pd.read_csv(df3_path,  index_col=0, parse_dates=True) 
-  df3_aug = data_ratios(df3, points)
-  pdb.set_trace()
-  df3_aug.to_csv('../csv_output/Floor2015/Floor05_ratios20151109-20151210.csv')
+  floors = [str(f) for f in [4,5,6,7,3,2,1]]
+  for f in floors:
+    df3_path = '../csv_output/Floor2015_3min/Floor%s_airflow20151015-20151226.csv'%(str(f).zfill(2))
+    df3 = pd.read_csv(df3_path,  index_col=0) 
+    df3_aug = data_ratios(df3, points)
+    df3_aug.to_csv('../csv_output/Floor2015_3min/Floor%s_ratios20151015-20151226.csv'%(str(f).zfill(2)))
   pdb.set_trace()
 
   #df2_path = '../csv_output/TEST/Floor04_ratios20151110-20151111.csv'

@@ -21,6 +21,7 @@ def energy_data(path_list, restrict, startF, endF, delta, ts, window):
   end = start + min(delta, (endF - start))
   time_frames = []
   while start != end:
+    #pdb.set_trace()
     startDate = start.strftime("%m/%d/%Y %H:%M")
     endDate = end.strftime("%m/%d/%Y %H:%M")
     print "Start date: ", startDate
@@ -33,18 +34,19 @@ def energy_data(path_list, restrict, startF, endF, delta, ts, window):
     data = query_data[1]
     tags = query_data[0]
     dt_format = '%Y-%m-%d %H:%M:%S'
-    dff = pd.DataFrame()
-    dff['datetime'] = ts
-    dff['timestamp'] = pd.DatetimeIndex(dff['datetime']).astype(np.int64)/1000
+    dff = tav_graphs_functions.dff_ts(start, end, ts)
+    #dff = pd.DataFrame()
+    #dff['datetime'] = ts
+    #dff['timestamp'] = pd.DatetimeIndex(dff['datetime']).astype(np.int64)/1000
     #[datetime.datetime.fromtimestamp(x/1000).strftime(dt_format)
     #                   for x in dff['timestamp']]
-    df = tav_graphs_functions.data_frame(dff, data, tags, path_list, mode='Path')
+    df = tav_graphs_functions.data_frame(dff, data, tags, path_list, tag_mode='Path')
     time_frames.append(df)
     start = end
     end += min(delta, (endF - end))
   df_period = reduce(lambda x,y:\
               pd.merge(x, y, on=['timestamp','datetime']), time_frames)
-  df_period.to_csv('../csv_output/Energy%s/'%(startF.year) + 'AHU_airflow%s-%s' \
+  df_period.to_csv('../csv_output/Energy%s/'%(startF.year) + 'Total_load%s-%s' \
     %(startF.strftime("%Y%m%d"), endF.strftime("%Y%m%d")) \
     + '.csv')
 
@@ -53,13 +55,14 @@ c = SmapClient(base='http://new.openbms.org/backend',\
 source_energy = 'Sutardja Dai Hall Energy Data'
 path_and_energy = 'energy_data/variable_elec_cost/'
 path_list_energy = [
-                'total_cost',
-                'AH2_panel_fan_power',
-                'AH2_panel_fan_power_cost',
-                'chilled_water_AH2',
-                'chilled_water_AH2_cost',
-                'hot_water_AH2',
-                'hot_water_AH2_cost'
+               # 'total_cost',
+               # 'AH2_panel_fan_power',
+               # 'AH2_panel_fan_power_cost',
+               # 'chilled_water_AH2',
+               # 'chilled_water_AH2_cost',
+               # 'hot_water_AH2',
+               # 'hot_water_AH2_cost'
+                'total_zone_load_AH2'
                 ]
 path_not_energy = ['chilled_water_AH2A', 'chilled_water_AH2B']
 #path_list_energy = [
@@ -97,16 +100,14 @@ restrict_airflow = " Metadata/SourceName = '%s' and ("\
              %(source_airflow)\
              + ' or '.join(["Path ~ '%s'"] * len(path_list_airflow)) \
              %tuple(path_list_airflow) + ")" 
-restrict = "(" + restrict_supply + ") or (" + restrict_airflow + ")"                  
-
-startF = date(2015, 10, 15)
-endF = date(2015, 12, 26)
+#restrict = "(" + restrict_supply + ") or (" + restrict_airflow + ")"                  
+restrict = restrict_energy
+path_list = path_list_energy
+#pdb.set_trace()
+startF = date(2014, 10, 15)
+endF = date(2014, 12, 26)
 delta = datetime.timedelta(days=80)
-window = 'apply window(mean, field=\"minute\", width=15) to'
-ts = pd.date_range(startF.strftime("%Y%m%d %H:%M:%S"), \
-                   endF.strftime("%Y%m%d %H:%M:%S"), freq="15min")
-# For energy list
-#energy_data(c, source_energy, path_list_energy, path_not_energy, startF, endF, delta, window)
-# For supply airflow data
-energy_data(path_list_airflow, restrict_airflow, startF, endF, delta, ts, window)
+ts = 3*60
+window = 'apply window(mean, field=\"minute\", width=3) to'
+energy_data(path_list, restrict, startF, endF, delta, ts, window)
 pdb.set_trace()

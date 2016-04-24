@@ -54,25 +54,29 @@ def dff_ts(startF, endF, step_in_seconds):
                                 for x in dff['timestamp']]
   return dff
 
-def data_frame(dff, data, tags, points, tag_mode):
+def data_frame(dff, data, tags, points, tag_mode, zone=None, zone_name=None):
   '''
   '''
-  #pdb.set_trace()
   N = len(data)
   if True:
     for i in range(N):
       u = data[i][tag_mode]
       d = np.array(data[i]['Readings'])
+      #pdb.set_trace()
       if d.any():
         tag_path = [tag['Path'] for tag in tags if tag[tag_mode] == u][0]
         try:
+          #pdb.set_trace()
           for p in points:
-            #pdb.set_trace()
-            #if p in tag_path: 
-            if p == tag_path.split('/')[-1]:
-            #if p == '/'.join(tag_path.split('/')[-2:]): # for tav_whole_bldg/... 
-              #head = '_'.join(tag_path.split('/')[-2:])
-              head = p # For energy data
+            match = False
+            if zone == True:
+              if p in tag_path and zone_name in tag_path:
+                head = '_'.join([p, zone_name]) 
+                match = True
+            elif p == tag_path.split('/')[-1] or p == '/'.join(tag_path.split('/')[-2:]):
+              head = p
+              match = True
+            if match == True:
               df = pd.DataFrame(d, columns=['timestamp', head]) 
               df['timestamp'] = df['timestamp']/1000.0
               dff = pd.merge(dff, df, how='outer', on=['timestamp']) 
@@ -80,31 +84,7 @@ def data_frame(dff, data, tags, points, tag_mode):
         except:
           print "Could not dwn data for " + '_'.join(tag_path.split('/')[-2:])
           pdb.set_trace()
-    return dff
-
-def data_frame_energy_zones(dff, data, tags, points, zone_name, tag_mode):
-  '''
-  '''
-  #pdb.set_trace()
-  N = len(data)
-  if True:
-    for i in range(N):
-      u = data[i][tag_mode]
-      d = np.array(data[i]['Readings'])
-      if d.any():
-        tag_path = [tag['Path'] for tag in tags if tag[tag_mode] == u][0]
-        try:
-          for p in points:
-            if p in tag_path and zone_name in tag_path: 
-              head = '_'.join([p, zone_name])
-              df = pd.DataFrame(d, columns=['timestamp', head]) 
-              df['timestamp'] = df['timestamp']/1000.0
-              dff = pd.merge(dff, df, how='outer', on=['timestamp']) 
-              print " Dwnl data for " + head
-        except:
-          print "Could not dwn data for " + tag_path.split('/')[-1]
-          pdb.set_trace()
-    return dff
+  return dff
 
 def data_ratios(df, points):
   df3 = df.replace(0.0,0.1)

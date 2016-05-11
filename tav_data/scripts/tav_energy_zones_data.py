@@ -1,4 +1,7 @@
 """
+Use this script to dwn data in from openbms in a specific time frame.
+Use the type of data (tav, energy related to zones (load) or BACnet) at the zone level.
+For data at a higher level, use the tav_energy.py script.
 @author Soazig Kaam <soazig.kaam@berkeley.edu>
 
 """
@@ -17,7 +20,7 @@ import datetime
 sys.path.append(os.path.join(os.path.dirname(__file__), "../functions/"))
 import tav_graphs_functions
 
-def tav_data(c, source, restrict_root, points, floors, not_zones, floor_frames, startF, endF, delta, window, ts_step, path_and=None):
+def tav_data(c, source, restrict_root, points, floors, not_zones, floor_frames, startF, endF, delta, floor_dir, window, ts_step, path_and=None):
   for f in floors:
     floor_frames = []
     zones_names = ['S%s-%s' %(f, str(z).zfill(2)) for z in range(1,22)]
@@ -42,53 +45,66 @@ def tav_data(c, source, restrict_root, points, floors, not_zones, floor_frames, 
         tags = query_data[0]
         data = query_data[1]
         dff = tav_graphs_functions.dff_ts(start, end, ts_step)
-        df = tav_graphs_functions.data_frame_energy_zones(dff, data, tags, points, zone_name, tag_mode='Path') #, zones = True, headers=int(1))
+        df = tav_graphs_functions.data_frame(dff, data, tags, points, tag_mode='Path', zone=True, zone_name=zone_name) 
         #pdb.set_trace()
         zone_frames.append(df)
         start = end
         end += min(delta, (endF - end))
-      df_zone = pd.concat(zone_frames)
+      df_zone = pd.concat(zone_frames) #concat the data fram of for this zone to cover the entire time period
       floor_frames.append(df_zone)
-      df_zone.to_csv('../csv_output_temp/Floor%s_load%s' \
+      df_zone.to_csv('../csv_output_temp/Floor%s-%s_' \
         %(str(f).zfill(2), str(zone_name))
-        + '%s-%s_tempo.csv'%(start.strftime("%Y%m%d"), end.strftime("%Y%m%d")))
+        + '%s-%s_temp.csv'%(start.strftime("%Y%m%d"), end.strftime("%Y%m%d")))
     #pdb.set_trace()
+    #Combine all zones (columns) in a dataframe
+    #TODO: create a temp file with aggregated floors
     df_floor = reduce(lambda x,y: \
                pd.merge(x, y, on=['timestamp','datetime']),floor_frames)
-#    floor_path = '../csv_output/TEST/' + 'Floor%s_airflow' %(str(f).zfill(2))  \
-    floor_path = '../csv_output/Floor%s_3min/'%(startF.year) + 'Floor%s_load' %(str(f).zfill(2))  \
+    floor_path = floor_dir \
+        + 'Floor%s_airflow_temp_load' %(str(f).zfill(2))  \
         + '%s-%s'%(startF.strftime("%Y%m%d"), endF.strftime("%Y%m%d"))\
         + '.csv' 
     df_floor.to_csv(floor_path)
-    floor_frames = []
-    pdb.set_trace()
-#    df_aug = tav_graphs_functions.data_ratios(df_floor, points) 
-#    floor_ratio_path = '../csv_output/Floor%s/'%(startF.year) + 'Floor%s_ratios' %(str(f).zfill(2))  \
-#    floor_ratio_path = '../csv_output/TEST/' + 'Floor%s_ratios' %(str(f).zfill(2))  \
-#        + '%s-%s'%(startF.strftime("%Y%m%d"), endF.strftime("%Y%m%d"))\
-#        + '.csv' 
-#    df_aug.to_csv(floor_ratio_path)
-#    pdb.set_trace()
 
 c = SmapClient(base='http://new.openbms.org/backend',\
                  key=['XuETaff882hB6li0dP3XWdiGYJ9SSsFGj0N8'])
+source = 'Sutardja Dai Hall BACnet'
+source_tav = 'Sutardja Dai Hall TAV'
 source_energy = 'Sutardja Dai Hall Energy Data'
+path_and_tav = ['tav_whole_bldg/']
 path_and_energy = ['energy_data/', 'variable_elec_cost/']
+points = ['CTL_FLOW_MAX', 'CTL_FLOW_MIN', 'AIR_VOLUME', 'ROOM_TEMP', 'CTL_STPT']
+points_tav = ['average_airflow_in_cycle', 'average_airflow_in_hour', 'tav_active'] 
 points_energy = ['zone_load']
 
-startF = date(2014,10, 15)
-endF = date(2014, 12, 26)
+startF = date(2016, 04, 30)
+endF = date(2016, 05, 11)
 delta = datetime.timedelta(days=80) #try with 3 days - 1min resolution next time
 ts_step = 3*60 #timestamp fq
 window='apply window(first, field=\"minute\", width=3) to' 
-restrict_energy_root = tav_graphs_functions.restrict(source_energy, points_energy, path_and_energy)
+restrict = tav_graphs_functions.restrict(source, points) 
+restrict_tav = tav_graphs_functions.restrict(source_tav, points_tav, path_and_tav)
+restrict_energy = tav_graphs_functions.restrict(source_energy, points_energy, path_and_energy)
 
-floors = [str(f) for f in [7, 2,1]]
+## Choose here what data to include in the request
+restrict_root = '( ' + restrict + ') or (' + restrict_energy + ')'
+#restrict_root = restrict
+points_root = points + points_energy
+
+#floors = [str(f) for f in [1]]
+floors = [str(f) for f in [4,5,6,7,3,2,1]]
 #floors = [str(f) for f in [4, 5]]
 not_zones = ['S1-11', 'S1-12', 'S1-21', 'S6-21', 'S7-17', 'S7-18','S7-19', 'S7-20', 'S7-21']
 floor_frames = []
 
-tav_data(c, source_energy, restrict_energy_root, points_energy, floors, not_zones, floor_frames, startF, endF, delta, window, ts_step, path_and=None)
-#tav_data(c, source_energy, restrict_energy, points_energy, floors, not_zones, floor_frames, startF, endF, delta, window, ts_step, path_and=None)
-pdb.set_trace()
+floor_dir = '../csv_output%s/Floor%s/'%(startF.year, startF.year)
+print floor_dir
+if not os.path.exists(floor_dir):
+  os.makedirs(floor_dir)
+#pdb.set_trace()
+
+tav_data(c, source, restrict_root, points_root, floors, not_zones, floor_frames, startF, endF, delta, floor_dir, window, ts_step, path_and=None)
+
+print "\n\n======================== Dwn Complete =========================="
+#pdb.set_trace()
 

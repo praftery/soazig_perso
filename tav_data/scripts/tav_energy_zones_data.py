@@ -2,6 +2,7 @@
 Use this script to dwn data in from openbms in a specific time frame.
 Use the type of data (tav, energy related to zones (load) or BACnet) at the zone level.
 For data at a higher level, use the tav_energy.py script.
+
 @author Soazig Kaam <soazig.kaam@berkeley.edu>
 
 """
@@ -60,8 +61,9 @@ def tav_data(c, source, restrict_root, points, floors, not_zones, floor_frames, 
     #TODO: create a temp file with aggregated floors
     df_floor = reduce(lambda x,y: \
                pd.merge(x, y, on=['timestamp','datetime']),floor_frames)
+        #+ 'Floor%s_airflow_temp_load' %(str(f).zfill(2))  \
     floor_path = floor_dir \
-        + 'Floor%s_airflow_temp_load' %(str(f).zfill(2))  \
+        + 'Floor%s_hot_water' %(str(f).zfill(2))\
         + '%s-%s'%(startF.strftime("%Y%m%d"), endF.strftime("%Y%m%d"))\
         + '.csv' 
     df_floor.to_csv(floor_path)
@@ -75,9 +77,9 @@ path_and_tav = ['tav_whole_bldg/']
 path_and_energy = ['energy_data/', 'variable_elec_cost/']
 points = ['CTL_FLOW_MAX', 'CTL_FLOW_MIN', 'AIR_VOLUME', 'ROOM_TEMP', 'CTL_STPT']
 points_tav = ['average_airflow_in_cycle', 'average_airflow_in_hour', 'tav_active'] 
-points_energy = ['zone_load']
+points_energy = ['hot_water'] #['zone_load']
 
-startF = date(2016, 04, 30)
+startF = date(2016, 04, 01)
 endF = date(2016, 05, 11)
 delta = datetime.timedelta(days=80) #try with 3 days - 1min resolution next time
 ts_step = 3*60 #timestamp fq
@@ -86,10 +88,11 @@ restrict = tav_graphs_functions.restrict(source, points)
 restrict_tav = tav_graphs_functions.restrict(source_tav, points_tav, path_and_tav)
 restrict_energy = tav_graphs_functions.restrict(source_energy, points_energy, path_and_energy)
 
-## Choose here what data to include in the request
+##TODO Choose here what data to include in the request
 restrict_root = '( ' + restrict + ') or (' + restrict_energy + ')'
 #restrict_root = restrict
-points_root = points + points_energy
+#points_root = points + points_energy
+points_root = points_energy
 
 #floors = [str(f) for f in [1]]
 floors = [str(f) for f in [4,5,6,7,3,2,1]]

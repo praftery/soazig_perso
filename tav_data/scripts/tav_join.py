@@ -24,6 +24,9 @@ def row_join(file_full, files_add, file_complete):
   for f in files_add:
     df_add.append(pd.read_csv(f, index_col=0))
   df_complete = pd.concat(df_add, join='outer', ignore_index=True)
+  time_cols = ['timestamp','datetime']
+  cols = time_cols  + [col for col in df_complete if col not in time_cols]
+  df_complete = df_complete[cols]
   df_complete.to_csv(file_complete)
 
 def column_join(file_full, files_add, file_complete):
@@ -38,13 +41,15 @@ def column_join(file_full, files_add, file_complete):
                pd.merge(x, y, on=['timestamp','datetime']), df_add)
   df_complete.to_csv(file_complete)
 
-file_full = '../csv_output2016/KOAK_weather20160401-20160430.csv' 
-#file_full = '../csv_output2016/Energy_TAV20160401-20160501.csv'
-file_add = ['../csv_output2016/KOAK_weather20160501-20160510.csv']
-#file_add = ['../csv_output2016/Energy_TAV_missing20160401-20160501.csv']
-#file_complete = '../csv_output2016/Energy_TAV20160401-20160430.csv'
-file_complete = '../csv_output2016/KOAK_weather20160401-20160510.csv'
+#file_full = '../csv_output2016/Energy_TAV20160401-20160430.csv'
+#file_add = ['../csv_output2016/Energy_TAV20160501-20160510.csv']
+#file_complete = '../csv_output2016/Energy_TAV20160401-20160510.csv'
 
 #column_join(file_full, file_add, file_complete)
-row_join(file_full, file_add, file_complete)
-pdb.set_trace()
+for i in range(1,8):
+  print "\nStarting Floor %s" %(str(i))
+  file_full = '../csv_output2016/Floor2016/Floor0%s_airflow_temp_load20160401-20160510.csv'%(str(i))
+  file_add = ['../csv_output2016/Floor2016/Floor0%s_hot_water20160401-20160511.csv'%(str(i))]
+  file_complete = '../csv_output2016/Floor2016/Floor0%s_airflow_temp_load20160401-20160510_new.csv'%(str(i))
+  column_join(file_full, file_add, file_complete)
+#pdb.set_trace()

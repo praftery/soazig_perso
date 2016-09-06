@@ -20,10 +20,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../functions/"))
 import tav_graphs_functions
 
 def energy_tav_data(path_list, restrict, startF, endF, delta, ts, window, file_dir, file_name):
+  endFp = endF - datetime.timedelta(days=1)
   start = startF
   end = start + min(delta, (endF - start))
   time_frames = []
-  print "\n\n=============================Process has started=========================="
+  print "\n=============================Process has started==========================\n"
   while start != end:
     startDate = start.strftime("%m/%d/%Y %H:%M")
     endDate = end.strftime("%m/%d/%Y %H:%M")
@@ -39,7 +40,7 @@ def energy_tav_data(path_list, restrict, startF, endF, delta, ts, window, file_d
     end += min(delta, (endF - end))
   df_full_period = pd.concat(time_frames)
   df_full_period.to_csv(file_dir + file_name + '%s-%s' \
-    %(startF.strftime("%Y%m%d"), endF.strftime("%Y%m%d")) \
+    %(startF.strftime("%Y%m%d"), endFp.strftime("%Y%m%d")) \
     + '.csv')
 
 c = SmapClient(base='http://new.openbms.org/backend',\
@@ -111,15 +112,15 @@ restrict_oat = " Metadata/SourceName = '%s' and ("\
 ##TODO Choose between TAv or energy data here
 #restrict = "(" + restrict_energy + ") or (" + restrict_airflow + ")"                
 #path_list = path_list_energy + path_list_airflow
-restrict = restrict_tav
-path_list = path_list_tav
-#restrict = restrict_oat
-#path_list = path_list_oat
+#restrict = restrict_tav
+#path_list = path_list_tav
+restrict = restrict_oat
+path_list = path_list_oat
 
 #TODO: change dat range and timestep here
 #pdb.set_trace()
-startF = datetime.datetime(2016, 04, 20, 0, 0, 0)
-endF = datetime.datetime(2016, 04, 21, 0, 0, 0)
+startF = datetime.datetime(2016, 04, 01, 0, 0, 0)
+endF = datetime.datetime(2016, 04, 02, 0, 0, 0)
 delta = datetime.timedelta(days=80)
 ts = 1*60 #window * 60s
 window = 'apply window(first, field=\"minute\", width=1) to'
@@ -130,7 +131,7 @@ file_name_oat = 'OAT'
 
 #TODO Choose file outpu location and file name here
 file_dir = '../csv_output%s/'%(startF.year)
-file_name = file_name_tav
+file_name = file_name_oat
 
 if not os.path.exists(file_dir):
   os.makedirs(file_dir)
@@ -138,4 +139,4 @@ if not os.path.exists(file_dir):
 energy_tav_data(path_list, restrict, startF, endF, delta, ts, window, file_dir, file_name)
 #pdb.set_trace()
 
-print "\n\n========================Download complete =========================="
+print "\n========================Download complete ==========================\n"

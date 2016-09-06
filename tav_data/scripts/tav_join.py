@@ -40,16 +40,21 @@ def column_join(file_full, files_add, file_complete):
   df_complete = reduce(lambda x,y: \
                pd.merge(x, y, on=['timestamp','datetime']), df_add)
   df_complete.to_csv(file_complete)
+  print "\n\n==============================Column combine ended===================================\n"
 
 #file_full = '../csv_output2016/Energy_TAV20160401-20160430.csv'
 #file_add = ['../csv_output2016/Energy_TAV20160501-20160510.csv']
 #file_complete = '../csv_output2016/Energy_TAV20160401-20160510.csv'
 
 #column_join(file_full, file_add, file_complete)
-for i in range(1,8):
-  print "\nStarting Floor %s" %(str(i))
-  file_full = '../csv_output2016/Floor2016/Floor0%s_airflow_temp_load20160401-20160510.csv'%(str(i))
-  file_add = ['../csv_output2016/Floor2016/Floor0%s_hot_water20160401-20160511.csv'%(str(i))]
-  file_complete = '../csv_output2016/Floor2016/Floor0%s_airflow_temp_load20160401-20160510_new.csv'%(str(i))
-  column_join(file_full, file_add, file_complete)
+for i in range(1,2):
+  for k in [10]:
+    l = min(k+3, 20)
+    #pdb.set_trace()
+    print "\nStarting Floor %s" %(str(i))
+    file_full = '../csv_output2016/Floor2016_dmpr_loop/Floor0%s_20160401-20160430_comp.csv'%(str(i))
+    files_add = ['../csv_output_temp/Floor0%s-S%s-%s_damper_htg_20160501-20160501_temp.csv'%(str(i), str(i), str(j).zfill(2)) \
+                  for j in range(k,k+1)]
+    file_complete = '../csv_output2016/Floor2016_dmpr_loop/Floor0%s_20160401-20160430_comp.csv'%(str(i))
+    column_join(file_full, files_add, file_complete)
 #pdb.set_trace()

@@ -74,7 +74,7 @@ def data_frame(dff, data, tags, points, tag_mode, zone=None, zone_name=None):
 #                head = '_'.join([zone_name, p[1:]]) #Only when using "cycle" data 
                 head = '_'.join([zone_name, p]) 
                 match = True
-            elif p == tag_path.split('/')[-1] or p == '/'.join(tag_path.split('/')[-2:]):
+            elif p in tag_path:
               head = p
               match = True
             if match == True:
